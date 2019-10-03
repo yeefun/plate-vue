@@ -56,7 +56,7 @@
       </div>
       
       <div class="split-line"></div>
-      <article class="content" id="article-body-content" itemprop="articleBody">
+      <article class="content" id="article-body-content" ref="articleBodyContent" itemprop="articleBody">
         <div v-for="(p, index) in contArr" :key="`${articleData.slug}-content-${index}`" :is="blockWrapper(index)">
           <ArticleImg v-if="p.type === 'image'"
             :viewport="viewport"
@@ -290,7 +290,7 @@ export default {
   },
   data () {
     return {
-      renderingStartTime: undefined
+      renderingStartTime: undefined,
     }
   },
   methods: {
@@ -378,9 +378,17 @@ export default {
           return
       }
     }, 
-    sendGaClickEvent 
+    sendGaClickEvent,
+    detectScrollToArticleBodyContentBottom () {
+      const articleBodyContentBottom = this.$refs.articleBodyContent.getBoundingClientRect().bottom
+      if (articleBodyContentBottom <= 0) {
+        this.$emit('loadNextArticle')
+        window.removeEventListener('scroll', this.detectScrollToArticleBodyContentBottom)
+      }
+    }
   },
   mounted () {
+    window.addEventListener('scroll', this.detectScrollToArticleBodyContentBottom)
     /*global twttr*/
     window.addEventListener('load', () => {
       window.twttr && twttr.widgets.load() 
