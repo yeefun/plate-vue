@@ -35,9 +35,7 @@
         </ClientOnly>
         <div class="article" v-if="articleData">
           <ArticleBody
-            v-for="article in articles"
-            :key="article.id"
-            :articleData="article.data"
+            :articleData="articleData"
             :isAd="isAd"
             :viewport="viewportWidth">
             <template slot="hero">
@@ -618,16 +616,7 @@
         showDfpFixedBtn: false,
         showDfpHeaderLogo: false,
         state: {},
-        verge,
-        articles: [
-          {
-            id: 1,
-            data: {}
-          },
-          // {
-          //   id: 2
-          // }
-        ]
+        verge
       }
     },
     computed: {
@@ -945,8 +934,6 @@
       },
     },
     mounted () {
-      this.articles[0].data = this.articleData
-
       this.insertMediafarmersScript()
       this.checkLockJS()
       this.updateSysStage()
