@@ -33,12 +33,10 @@
             />
           </LazyItemWrapper>
         </ClientOnly>
-        <div class="article" v-if="articleData">
+        <div class="article" v-if="articleData" v-for="article in articles">
           <ArticleBody
-            v-for="article in articles"
-            :key="article.id"
+            :key="article.key"
             :articleData="article.data"
-            @loadNextArticle="loadNextArticle"
 
             :isAd="isAd"
             :viewport="viewportWidth">
@@ -200,20 +198,14 @@
             />            
             <div class="article_fb_comment" style="margin: 1.5em 0;" slot="slot_fb_comment" v-html="fbCommentDiv"></div>
             <!-- dable -->
-            <template v-if="!hiddenAdvertised" slot="recommendList">
-              <div
-                v-if="isMobile"
-                id="dablewidget_6XgaOJ7N"
-                class="dable-widget"
-                data-widget_id="6XgaOJ7N"
-              />
-              <div
-                v-else
-                id="dablewidget_GlYwenoy"
-                class="dable-widget"
-                data-widget_id="GlYwenoy"
-              />
-            </template>
+            <div
+              v-if="!hiddenAdvertised"
+              slot="recommendList"
+              :id="isMobile ? 'dablewidget_6XgaOJ7N' : 'dablewidget_GlYwenoy'"
+              :data-widget_id="isMobile ? '6XgaOJ7N' : 'GlYwenoy'"
+              class="dable-widget"
+              ref="dable"
+            />
           </ArticleBody>
           <div class="article_footer" :style="needWineWarning ? { paddingBottom: '10px' } : ''">
             <LazyItemWrapper
@@ -339,7 +331,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import {
   find as _find,
   get as _get,
@@ -623,16 +614,9 @@ export default {
       showDfpHeaderLogo: false,
       state: {},
       verge,
-      num: 0,
-      articles: [
-        {
-          id: 1,
-          data: {}
-        },
-        // {
-        //   id: 2
-        // }
-      ]
+      wEl: null,
+      articleKey: 1,
+      articles: []
     }
   },
   computed: {
@@ -851,11 +835,17 @@ export default {
   },
   methods: {
     loadNextArticle () {
-      this.num += 1
-      Vue.set(this.articles, this.num, {
-        id: (this.num + 1),
+      const ads = document.querySelectorAll('.ad-container')
+      ads.forEach((ad) => ad.parentNode.removeChild(ad))
+      this.articleKey += 1
+      this.articles.push({
+        key: this.articleKey,
         data: this.articleData
       })
+    },
+    detectDable () {
+      const dableTop = this.$refs.dable[this.articleKey - 1].getBoundingClientRect().top
+      if (dableTop <= 0) this.loadNextArticle()
     },
     checkLockJS () {
       this.isLockJS ? lockJS() : unLockJS()
@@ -957,7 +947,11 @@ export default {
     }
   },
   mounted () {
-    this.articles[0].data = this.articleData
+    this.wEl = window
+    this.articles.push({
+      key: this.articleKey,
+      data: this.articleData
+    })
 
     this.insertMediafarmersScript()
     this.checkLockJS()
@@ -976,15 +970,17 @@ export default {
     /**
      * Fetch latests after window.onload.
      */
-    window.addEventListener('load', () => {
+    this.wEl.addEventListener('load', () => {
       (!this.isMobile || this.abIndicator === 'B') && fetchLatestArticle(this.$store, {
         sort: '-publishedDate',
         where: { 'sections': this.sectionId }
       })
     })
 
-    window.addEventListener('resize', this.handleWWChange)
-    window.addEventListener('orientationChange', this.handleWWChange)
+    this.wEl.addEventListener('scroll', this.detectDable)
+
+    this.wEl.addEventListener('resize', this.handleWWChange)
+    this.wEl.addEventListener('orientationChange', this.handleWWChange)
 
     /**
      * Data's supposed to be loaded later.

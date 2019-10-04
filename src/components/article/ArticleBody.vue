@@ -378,17 +378,9 @@ export default {
           return
       }
     }, 
-    sendGaClickEvent,
-    detectScrollToArticleBodyContentBottom () {
-      const articleBodyContentBottom = this.$refs.articleBodyContent.getBoundingClientRect().bottom
-      if (articleBodyContentBottom <= 0) {
-        this.$emit('loadNextArticle')
-        window.removeEventListener('scroll', this.detectScrollToArticleBodyContentBottom)
-      }
-    }
+    sendGaClickEvent
   },
   mounted () {
-    window.addEventListener('scroll', this.detectScrollToArticleBodyContentBottom)
     /*global twttr*/
     window.addEventListener('load', () => {
       window.twttr && twttr.widgets.load() 
